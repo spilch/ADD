@@ -1,5 +1,5 @@
 #to do:
-#add bar
+#set up characterKnows to replace characterDumb flag?
 #230528
     #added bar with tardy flag
     #Changed "tookWalk" flag to "tardy"
@@ -9,10 +9,16 @@
 init:
 
     $ tardy = False 
+    #$ bryanKnows = False
+    #$ wolfeKnows = False
+    #$ sophiaKnows = False
     $ bryanDumb = True
     $ wolfeDumb = True
+    #$ wolfeKnows = False
+    #$ sophiaKnows = False
     $ riftOpen = False
-    $ colliderJammed = False   
+    $ colliderJammed = False 
+    $ currentHour == 1
 
     #characters
     define p = Character("You")
@@ -24,11 +30,16 @@ init:
                     image="sophia.png")
     define w = Character("Dr. Wolfe",
                     color="#808080",
+                    image="wolfe.png") 
+    define a = Character("Alex",
+                    color="#808080",
                     image="wolfe.png")                        
 
 label start:
 
 label part_1:
+
+$ currentHour == 1
 
 if riftOpen:
     scene black with dissolve
@@ -37,6 +48,9 @@ if riftOpen:
 
 $ saysFeels = False
 $ tardy = False
+#$ bryanKnows = False
+#$ wolfeKnows = False
+#$ sophiaKnows = False
 $ bryanDumb = True
 $ wolfeDumb = True
 $ colliderJammed = False
@@ -44,7 +58,10 @@ $ colliderJammed = False
 scene bg apt with dissolve
 
 "June 7th, 2013 6:00 AM"
-"The day of the experiment"
+"The day of the experiment."
+if riftOpen:
+    "Again."
+    "You are in a time loop."
 
 menu:
 
@@ -53,22 +70,54 @@ menu:
         $ riftOpen = True
         jump start
     "Go to the lab":
+        $ currentHour += 1
         jump lab
     "Go to the bar":      
         $ tardy = True
+        $ currentHour += 1
         jump bar
    
     #Add "Go to the Bar"
 
+label apartment:
+
+menu:
+
+    "Go back to bed":
+        scene black with dissolve
+        $ riftOpen = True
+        jump start
+    "Go to the lab":
+        $ currentHour += 1
+        jump lab
+    "Go to the bar":      
+        $ tardy = True
+        $ currentHour += 1
+        jump bar
+
 label bar:
 
     scene bg bar with dissolve
-
+    show alex at right with dissolve
     menu:
+        "Talk to Alex":
+            jump alex_Greeting
         "Go to the lab":
+            $ currentHour += 1
             jump lab
         "Go home":
+            $ currentHour += 1
             jump part_1
+        "Sit around":  
+            $ riftOpen = True
+            jump part_1
+
+label alex_greeting:
+
+    a "Hey, buddy. Can I get you a drink?"
+    menu:
+        "It's a little early for that." if currentHour <= 4:
+##Finish bar scene
 
 label lab:
 
@@ -79,9 +128,7 @@ label lab:
     if bryanDumb:
         show bryan at center with dissolve
     show sophia at right with dissolve
-    if tardy:
-        "You arrive at the lab feeling refreshed."
-    
+     
     menu:
         "Talk to Dr. Wolfe" if wolfeDumb:
             jump wolfe_greeting
@@ -139,19 +186,22 @@ label bryan_greeting:
         "'Would you like to?'" if riftOpen:
             scene black with dissolve
             jump end_bryan
-        "'It's pretty much just a tunnel full of tubes and electrical boxes.'":
-            b "The most powerful one ever! This experiment will make history."
-            p "I'm sure it will, Bryan."
-            $ bryanDumb = False
-            b "Let me fetch you a fresh coffee."
+        "'Maybe I can give you a tour after the experiment.'":
+            b "Cool!"
             jump lab
+       # "'It's pretty much just a tunnel full of tubes and electrical boxes.'":
+        #    b "The most powerful one ever! This experiment will make history."
+         #   p "I'm sure it will, Bryan."
+          #  $ bryanDumb = False
+           # b "Let me fetch you a fresh coffee."
+            #jump lab
 
 label end_bryan:
     scene bg collider with dissolve
     show bryan at center
     b "Wow! This is so cool! I promise not to touch anything."
     scene bg lab
-    p "Don't worry about it. In fact, you can help me with something while you're down there."
+    p "Don't worry about it. In fact , you can help me with something while you're down there.'"
     scene bg collider
     show bryan at center
     b "Really? I don't think I'm qualified..."
@@ -166,19 +216,19 @@ label end_bryan:
     show bryan at center
     b "I don't feel comfortable with this. I don't like being alone down here."
     scene bg lab
-    p "Everyone dies alone, Bryan."
+    p "Everyone is alone eventually, Bryan."
     "You close the blast doors."
     #add blast door sfx
     scene bg collider
     show bryan at center
-    b "What was that?"
+    b "What? What was that sound?"
     scene bg lab
     p "Those were the blast doors, Bryan. I can't open them until you pull the lever."
     scene bg collider
     show bryan at center
     b "Help! Let me out!"
     scene bg lab
-    p "As soon as you pull the lever, Bryan. Please. There is no time to waste."
+    p "Pull the lever, Bryan. Please. There is no time to waste."
     #sfx building hum
     scene bg collider
     show bryan at center
@@ -200,6 +250,7 @@ label end_bryanJam:
     scene bg lab
     p "Please, Bryan. It's too late to argue."
     b "No, I'm trying to move it. It won't budge. What's happening?"
+    p "Fuck."
     # sfx rising hum 2
     $ riftOpen = True
     scene black with dissolve
