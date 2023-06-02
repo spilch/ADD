@@ -18,7 +18,6 @@ init:
     #$ sophiaKnows = False
     $ riftOpen = False
     $ colliderJammed = False 
-    $ currentHour == 1
 
     #characters
     define p = Character("You")
@@ -39,7 +38,6 @@ label start:
 
 label part_1:
 
-$ currentHour == 1
 
 if riftOpen:
     scene black with dissolve
@@ -70,11 +68,9 @@ menu:
         $ riftOpen = True
         jump start
     "Go to the lab":
-        $ currentHour += 1
         jump lab
     "Go to the bar":      
         $ tardy = True
-        $ currentHour += 1
         jump bar
    
     #Add "Go to the Bar"
@@ -88,11 +84,9 @@ menu:
         $ riftOpen = True
         jump start
     "Go to the lab":
-        $ currentHour += 1
         jump lab
     "Go to the bar":      
         $ tardy = True
-        $ currentHour += 1
         jump bar
 
 label bar:
@@ -103,10 +97,8 @@ label bar:
         "Talk to Alex":
             jump alex_Greeting
         "Go to the lab":
-            $ currentHour += 1
             jump lab
         "Go home":
-            $ currentHour += 1
             jump part_1
         "Sit around":  
             $ riftOpen = True
@@ -115,8 +107,8 @@ label bar:
 label alex_greeting:
 
     a "Hey, buddy. Can I get you a drink?"
-    menu:
-        "It's a little early for that." if currentHour <= 4:
+    #menu:
+     #   "It's a little early for that." if currentHour <= 4:
 ##Finish bar scene
 
 label lab:
