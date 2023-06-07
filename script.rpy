@@ -4,20 +4,26 @@
     #added bar with tardy flag
     #Changed "tookWalk" flag to "tardy"
     #Added colliderJammed flag and respective endings
+#230606
+    #added mix convo tree with repeat tracking, which is brokens
 
 
 init:
 
-    $ tardy = False 
-    #$ bryanKnows = False
-    #$ wolfeKnows = False
-    #$ sophiaKnows = False
-    $ bryanDumb = True
-    $ wolfeDumb = True
-    #$ wolfeKnows = False
-    #$ sophiaKnows = False
-    $ riftOpen = False
-    $ colliderJammed = False 
+    python:
+        tardy = False 
+        #$ bryanKnows = False
+        #$ wolfeKnows = False
+        #$ sophiaKnows = False
+        bryanDumb = True
+        wolfeDumb = True
+        #$ wolfeKnows = False
+        #$ sophiaKnows = False
+        riftOpen = False
+        colliderJammed = False 
+        visited_bar = False
+        mix_changedmind = False
+        mixOrders = 0
 
     #characters
     define p = Character("You")
@@ -32,7 +38,10 @@ init:
                     image="wolfe.png") 
     define a = Character("Alex",
                     color="#808080",
-                    image="wolfe.png")                        
+                    image="wolfe.png")
+    define m = Character("Mix",
+                    color="#808080",
+                    image="mix.png")                    
 
 label start:
 
@@ -52,6 +61,7 @@ $ tardy = False
 $ bryanDumb = True
 $ wolfeDumb = True
 $ colliderJammed = False
+$ mixOrders = 0
 
 scene bg apt with dissolve
 
@@ -90,12 +100,14 @@ menu:
         jump bar
 
 label bar:
-
+    $ visited_bar = True
     scene bg bar with dissolve
-    show alex at right with dissolve
+    show max at center with dissolve
+    m "Welcome back, my friend."
+
     menu:
-        "Talk to Alex":
-            jump alex_Greeting
+        "Talk to Mix":
+            jump mix_greeting
         "Go to the lab":
             jump lab
         "Go home":
@@ -104,12 +116,70 @@ label bar:
             $ riftOpen = True
             jump part_1
 
-label alex_greeting:
 
-    a "Hey, buddy. Can I get you a drink?"
+label bar_return:
+    menu:
+        "Talk to Mix":
+            jump mix_greeting
+        "Go to the lab":
+            jump lab
+        "Go home":
+            jump part_1
+        "Sit around":  
+            $ riftOpen = True
+            jump part_1
+
+label mix_greeting:
+    if mix_changedmind:
+        m "Change your mind?"
+    m "The usual?"
+    menu:
+        "The usual?":
+            jump mix_drink
+        "Yes, please.":
+            jump mix_drink
+        "Nothing, thanks.":
+            $ mix_changedmind = True
+            jump mix_nodrink   
     #menu:
-     #   "It's a little early for that." if currentHour <= 4:
-##Finish bar scene
+     #   Add time-based dialogue after clock is implemented i.e. "It's too early to drink" or w/e
+
+label mix_drink:
+    m "Old Fashioned, extra sugar. Coming right up."
+    jump mix_whatsnew
+
+label mix_nodrink:
+    if mixOrders < 1:
+        $ mixOrders += 1 #track order repeats for extra sass from mix
+        m "Double shot of nothing, on the house."
+    elif mixOrders = 1:
+        m "Another free glass of nothing. I have to charge you for the next one."
+        $ mixOrders += 1
+    else:
+        "Is this your new usual?"
+    
+    jump bar_return
+
+label mix_whatsnew:
+    m "So, what's new and exciting?"
+    menu:
+        "I'm stuck in a time loop." if riftOpen:
+            m "Huh."
+            jump bar
+            #jump mix_timeLoop
+        #"Big experiment at the lab today.":
+            jump mix_experiment
+       # "Not much. How are you?":
+            jump mix_howismix
+        "Actually, I have to go.":
+            m "Alright then. See you next time."
+            jump bar_return
+
+#label mix_howismix:
+
+#label mix_experiment:
+
+#label mix_timeLoop:
 
 label lab:
 
