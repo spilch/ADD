@@ -1,11 +1,14 @@
 #to do:
+#Add all story branches then use conditionals to hide
 #set up characterKnows to replace characterDumb flag?
-#230528
-    #added bar with tardy flag
+#organize conversation flags by character
+
+#230528:added bar with tardy flag
     #Changed "tookWalk" flag to "tardy"
     #Added colliderJammed flag and respective endings
-#230606
-    #added mix convo tree with repeat tracking, which is brokens
+#230606: added mix convo tree with repeat tracking, which is brokensz
+#230608: started changing flags to snake case format and renaming for readabilitys
+
 
 
 init:
@@ -19,11 +22,20 @@ init:
         wolfeDumb = True
         #$ wolfeKnows = False
         #$ sophiaKnows = False
-        riftOpen = False
+        loop_aware = False
         colliderJammed = False 
         visited_bar = False
-        mix_changedmind = False
-        mixOrders = 0
+        #mix_changedmind = False
+     
+        #conversation options
+        # format is [character]_[topic]_talk = [boolean] where "true" allows the topic to be shown/chosen
+        #mix
+        mix_experiment_talk = True
+        mix_timeloop_talk = False
+        mix_returning = False
+        mix_drinks_ordered = 0
+        mix_no_drink = 0
+        mix_at_bar = True
 
     #characters
     define p = Character("You")
@@ -48,7 +60,7 @@ label start:
 label part_1:
 
 
-if riftOpen:
+if loop_aware:
     scene black with dissolve
     "You feel a science-y explosion."
     #insert time rift animation
@@ -61,13 +73,12 @@ $ tardy = False
 $ bryanDumb = True
 $ wolfeDumb = True
 $ colliderJammed = False
-$ mixOrders = 0
 
 scene bg apt with dissolve
 
 "June 7th, 2013 6:00 AM"
 "The day of the experiment."
-if riftOpen:
+if loop_aware:
     "Again."
     "You are in a time loop."
 
@@ -75,7 +86,7 @@ menu:
 
     "Go back to bed":
         scene black with dissolve
-        $ riftOpen = True
+        $ loop_aware = True
         jump start
     "Go to the lab":
         jump lab
@@ -91,7 +102,7 @@ menu:
 
     "Go back to bed":
         scene black with dissolve
-        $ riftOpen = True
+        $ loop_aware = True
         jump start
     "Go to the lab":
         jump lab
@@ -102,18 +113,19 @@ menu:
 label bar:
     $ visited_bar = True
     scene bg bar with dissolve
-    show max at center with dissolve
-    m "Welcome back, my friend."
+    if mix_at_bar:
+        show mix at center with dissolve
+        m "Welcome back, my friend."
 
     menu:
-        "Talk to Mix":
+        "Talk to Mix" if mix_at_bar:
             jump mix_greeting
         "Go to the lab":
             jump lab
-        "Go home":
+        "Go home": 
             jump part_1
         "Sit around":  
-            $ riftOpen = True
+            $ loop_aware = True
             jump part_1
 
 
@@ -126,48 +138,62 @@ label bar_return:
         "Go home":
             jump part_1
         "Sit around":  
-            $ riftOpen = True
+            $ loop_aware = True
             jump part_1
 
 label mix_greeting:
-    if mix_changedmind:
+    if mix_returning:
         m "Change your mind?"
     m "The usual?"
     menu:
         "The usual?":
-            jump mix_drink
+            $ mix_drinks_ordered += 1
+            m "Old Fashioned, coming right up."
+            #sfx glass clink
         "Yes, please.":
-            jump mix_drink
+            $ mix_drinks_ordered += 1
+            m "Old Fashioned, coming right up."
+        #sfx glass clink
         "Nothing, thanks.":
-            $ mix_changedmind = True
-            jump mix_nodrink   
+            $ mix_returning = True
+            $ mix_no_drink += 1
+            jump mix_no_drink   
     #menu:
      #   Add time-based dialogue after clock is implemented i.e. "It's too early to drink" or w/e
 
 label mix_drink:
-    m "Old Fashioned, extra sugar. Coming right up."
+
     jump mix_whatsnew
 
 label mix_nodrink:
-    if mixOrders < 1:
-        $ mixOrders += 1 #track order repeats for extra sass from mix
+    if mix_no_drink < 1:
+        $ mix_no_drink += 1 #track order repeats for extra sass from mix
         m "Double shot of nothing, on the house."
-    elif mixOrders = 1:
+    elif mix_no_drink = 1:
         m "Another free glass of nothing. I have to charge you for the next one."
-        $ mixOrders += 1
+        $ mix_no_drink += 1
+    elif mix_no_drink = 2:
+        $ mix_no_drink += 1
+        m "Is this your new usual?"
     else:
-        "Is this your new usual?"
+        "Whatever."
+    jump mix_whatsnew
     
     jump bar_return
 
 label mix_whatsnew:
     m "So, what's new and exciting?"
+    jump mix_convo
+label mix_convo
     menu:
-        "I'm stuck in a time loop." if riftOpen:
+        "'I'm stuck in a time loop.'" if loop_aware:
+            $ mix_timeloop_talk = False 
             m "Huh."
+            m "You got the Lotto numbers yet? Just kidding. If I came into money, my family would come begging before the check cleared."
             jump bar
             #jump mix_timeLoop
-        #"Big experiment at the lab today.":
+        "'Big experiment at the lab today.'" if mix_experiment_talk:
+            $ mix_experiment_talk = False
             jump mix_experiment
        # "Not much. How are you?":
             jump mix_howismix
@@ -177,7 +203,9 @@ label mix_whatsnew:
 
 #label mix_howismix:
 
-#label mix_experiment:
+label mix_experiment:
+    m "Running that collider? I hope it doesn't turn the planet into a black hole or something. At least not before Terrence pays off his tab. That bastard owes me six hundred bucks."
+    jump mix_whatsnew
 
 #label mix_timeLoop:
 
@@ -199,7 +227,7 @@ label lab:
         "Talk to Sophia":
             jump sophia_greeting
         "Sit around.":
-            $ riftOpen = True
+            $ loop_aware = True
             jump part_1
 
 label wolfe_greeting:
@@ -211,7 +239,7 @@ label wolfe_greeting:
     w "We are on the brink of a discovery that will benefit humanity, the shareholders, and my bank account. Don't fuck it up."
    
     menu:
-        "'Too late. If we don't shut down the collider, it will create a time loop." if riftOpen:
+        "'Too late. If we don't shut down the collider, it will create a time loop." if loop_aware:
             $ wolfeDumb = False
             $ colliderJammed = True
             w "I've heard that joke before. It's still not funny."
@@ -240,12 +268,12 @@ label bryan_greeting:
     b "I heard your project is using the collider today. That's so cool. I've never even seen it up close."
 
     menu:
-        "'It is about to blow up and get me stuck in a time loop, so I'm kind of over it.'" if riftOpen:
+        "'It is about to blow up and get me stuck in a time loop, so I'm kind of over it.'" if loop_aware:
             $ bryanDumb = False
             b "Seriously?! I have to call my pet sitter."
             p "Why?"
             jump lab
-        "'Would you like to?'" if riftOpen:
+        "'Would you like to?'" if loop_aware:
             scene black with dissolve
             jump end_bryan
         "'Maybe I can give you a tour after the experiment.'":
@@ -314,7 +342,7 @@ label end_bryanJam:
     b "No, I'm trying to move it. It won't budge. What's happening?"
     p "Fuck."
     # sfx rising hum 2
-    $ riftOpen = True
+    $ loop_aware = True
     scene black with dissolve
     jump part_1
 
@@ -327,7 +355,7 @@ label sophia_greeting:
     else:
         s "Good morning! Aren't you excited about the experiment today?"
     menu:
-        "'It causes a temporal rift and now I'm stuck in a time loop, so I guess you could say I have mixed feelings.'" if riftOpen:
+        "'It causes a temporal rift and now I'm stuck in a time loop, so I guess you could say I have mixed feelings.'" if loop_aware:
             s "If that's true, you'll have plenty of time to sort those feelings out."
             menu:
                 "I'd rather prevent the rift. Will you help me?":
@@ -401,7 +429,7 @@ label end_sophiaJam:
     s "..."
     s "It won't move. The lever is jammed."
     s "I can't stop it. I'm sorry."
-    $ riftOpen = True
+    $ loop_aware = True
     jump part_1
 
 label end_protagJam:
@@ -435,7 +463,7 @@ label end_protagJam:
     w "Then it's not my problem."
     s "You can't do this!"
     w "I already have."
-    $ riftOpen = True
+    $ loop_aware = True
     scene black with dissolve
 
     jump part_1
@@ -458,7 +486,7 @@ label end_wolfe:
     show wolfe
     w "..."
     w "No."
-    $ riftOpen = True
+    $ loop_aware = True
     
     jump start
 
