@@ -7,8 +7,8 @@
     #Changed "tookWalk" flag to "tardy"
     #Added colliderJammed flag and respective endings
 #230606: added mix convo tree with repeat tracking, which is brokensz
-#230608: started changing flags to snake case format and renaming for readabilitys
-
+#230608: started changing flags to snake case format and renaming flags/variables for readability including "aware" for info and "knows"
+    # mostly fixed mix's responses changing based on player choices (for drink ordering)
 
 
 init:
@@ -22,20 +22,23 @@ init:
         wolfeDumb = True
         #$ wolfeKnows = False
         #$ sophiaKnows = False
-        loop_aware = False
+        p_aware_of_loop = False
         colliderJammed = False 
         visited_bar = False
         #mix_changedmind = False
      
-        #conversation options
-        # format is [character]_[topic]_talk = [boolean] where "true" allows the topic to be shown/chosen
-        #mix
+        ## conversation tracking ##
+        # track which convo options will be shown: [character]_[topic]_talk = True/False #
+        # track who knows who for greetings: [character initial]_knows_[character name] #
         mix_experiment_talk = True
         mix_timeloop_talk = False
         mix_returning = False
         mix_drinks_ordered = 0
         mix_no_drink = 0
         mix_at_bar = True
+        mix_first_visit = True
+        p_knows_mix = False 
+        p_knows_drink = False
 
     #characters
     define p = Character("You")
@@ -60,7 +63,7 @@ label start:
 label part_1:
 
 
-if loop_aware:
+if p_aware_of_loop:
     scene black with dissolve
     "You feel a science-y explosion."
     #insert time rift animation
@@ -78,7 +81,7 @@ scene bg apt with dissolve
 
 "June 7th, 2013 6:00 AM"
 "The day of the experiment."
-if loop_aware:
+if p_aware_of_loop:
     "Again."
     "You are in a time loop."
 
@@ -86,7 +89,7 @@ menu:
 
     "Go back to bed":
         scene black with dissolve
-        $ loop_aware = True
+        $ p_aware_of_loop = True
         jump start
     "Go to the lab":
         jump lab
@@ -102,7 +105,7 @@ menu:
 
     "Go back to bed":
         scene black with dissolve
-        $ loop_aware = True
+        $ p_aware_of_loop = True
         jump start
     "Go to the lab":
         jump lab
@@ -113,80 +116,83 @@ menu:
 label bar:
     $ visited_bar = True
     scene bg bar with dissolve
+    #sfx bar atmosphere
     if mix_at_bar:
         show mix at center with dissolve
-        m "Welcome back, my friend."
+    jump bar_menu
+
+label bar_menu:
 
     menu:
         "Talk to Mix" if mix_at_bar:
-            jump mix_greeting
+            jump mix_menu
         "Go to the lab":
             jump lab
         "Go home": 
             jump part_1
         "Sit around":  
-            $ loop_aware = True
+            $ p_aware_of_loop = True
             jump part_1
 
 
-label bar_return:
-    menu:
-        "Talk to Mix":
-            jump mix_greeting
-        "Go to the lab":
-            jump lab
-        "Go home":
-            jump part_1
-        "Sit around":  
-            $ loop_aware = True
-            jump part_1
 
-label mix_greeting:
-    if mix_returning:
+label mix_menu:
+    if p_knows_mix:
+        p "Hi, Mix."
+    if mix_first_visit:
+        m "Welcome back, my friend. What can I get you?"
+        $ mix_first_visit = False
+    else:
+        m "What's up?"
+    if mix_no_drink >= 1:
         m "Change your mind?"
-    m "The usual?"
     menu:
-        "The usual?":
-            $ mix_drinks_ordered += 1
-            m "Old Fashioned, coming right up."
-            #sfx glass clink
-        "Yes, please.":
-            $ mix_drinks_ordered += 1
-            m "Old Fashioned, coming right up."
-        #sfx glass clink
-        "Nothing, thanks.":
-            $ mix_returning = True
-            $ mix_no_drink += 1
-            jump mix_no_drink   
+        "'I'd like a drink.'":
+            if mix_no_drink >= 3:
+                m "Are you sure?"
+            else:
+                m "Sounds good. The usual?"
+            menu:
+                "'The usual?'" if not p_knows_drink:
+                    m "Old Fashioned, coming right up."
+                    $ p_knows_drink = True
+                    $ mix_drinks_ordered += 1
+                    #sfx glass clink
+                    jump bar_menu
+                "'You know it.'":
+                    m "Old Fashioned, coming right up."
+                    $ p_knows_drink = True
+                    $ mix_drinks_ordered += 1
+                    jump bar_menu
+                "'Nothing, thanks.'": 
+                    if mix_no_drink == 0: 
+                        m "Double shot of nothing, on the house."
+                        $ mix_no_drink += 1
+                        jump bar_menu
+                    elif mix_no_drink == 1:
+                        m "Another free glass of nothing. I have to charge you for the next one."
+                        $ mix_no_drink += 1
+                        jump bar_menu
+                    elif mix_no_drink == 2:
+                        m "Is this your usual now?"
+                    else:
+                        m "Whatever you want."
+                    jump bar_menu
+        "'I wanted to chat.'":
+            m "Alright."
+            jump mix_whatsnew    
+
+                
     #menu:
      #   Add time-based dialogue after clock is implemented i.e. "It's too early to drink" or w/e
 
-label mix_drink:
-
-    jump mix_whatsnew
-
-label mix_nodrink:
-    if mix_no_drink < 1:
-        $ mix_no_drink += 1 #track order repeats for extra sass from mix
-        m "Double shot of nothing, on the house."
-    elif mix_no_drink = 1:
-        m "Another free glass of nothing. I have to charge you for the next one."
-        $ mix_no_drink += 1
-    elif mix_no_drink = 2:
-        $ mix_no_drink += 1
-        m "Is this your new usual?"
-    else:
-        "Whatever."
-    jump mix_whatsnew
-    
-    jump bar_return
-
+  
 label mix_whatsnew:
     m "So, what's new and exciting?"
     jump mix_convo
-label mix_convo
+label mix_convo:
     menu:
-        "'I'm stuck in a time loop.'" if loop_aware:
+        "'I'm stuck in a time loop.'" if p_aware_of_loop:
             $ mix_timeloop_talk = False 
             m "Huh."
             m "You got the Lotto numbers yet? Just kidding. If I came into money, my family would come begging before the check cleared."
@@ -199,7 +205,7 @@ label mix_convo
             jump mix_howismix
         "Actually, I have to go.":
             m "Alright then. See you next time."
-            jump bar_return
+
 
 #label mix_howismix:
 
@@ -227,7 +233,7 @@ label lab:
         "Talk to Sophia":
             jump sophia_greeting
         "Sit around.":
-            $ loop_aware = True
+            $ p_aware_of_loop = True
             jump part_1
 
 label wolfe_greeting:
@@ -239,7 +245,7 @@ label wolfe_greeting:
     w "We are on the brink of a discovery that will benefit humanity, the shareholders, and my bank account. Don't fuck it up."
    
     menu:
-        "'Too late. If we don't shut down the collider, it will create a time loop." if loop_aware:
+        "'Too late. If we don't shut down the collider, it will create a time loop." if p_aware_of_loop:
             $ wolfeDumb = False
             $ colliderJammed = True
             w "I've heard that joke before. It's still not funny."
@@ -268,12 +274,12 @@ label bryan_greeting:
     b "I heard your project is using the collider today. That's so cool. I've never even seen it up close."
 
     menu:
-        "'It is about to blow up and get me stuck in a time loop, so I'm kind of over it.'" if loop_aware:
+        "'It is about to blow up and get me stuck in a time loop, so I'm kind of over it.'" if p_aware_of_loop:
             $ bryanDumb = False
             b "Seriously?! I have to call my pet sitter."
             p "Why?"
             jump lab
-        "'Would you like to?'" if loop_aware:
+        "'Would you like to?'" if p_aware_of_loop:
             scene black with dissolve
             jump end_bryan
         "'Maybe I can give you a tour after the experiment.'":
@@ -342,7 +348,7 @@ label end_bryanJam:
     b "No, I'm trying to move it. It won't budge. What's happening?"
     p "Fuck."
     # sfx rising hum 2
-    $ loop_aware = True
+    $ p_aware_of_loop = True
     scene black with dissolve
     jump part_1
 
@@ -355,7 +361,7 @@ label sophia_greeting:
     else:
         s "Good morning! Aren't you excited about the experiment today?"
     menu:
-        "'It causes a temporal rift and now I'm stuck in a time loop, so I guess you could say I have mixed feelings.'" if loop_aware:
+        "'It causes a temporal rift and now I'm stuck in a time loop, so I guess you could say I have mixed feelings.'" if p_aware_of_loop:
             s "If that's true, you'll have plenty of time to sort those feelings out."
             menu:
                 "I'd rather prevent the rift. Will you help me?":
@@ -429,7 +435,7 @@ label end_sophiaJam:
     s "..."
     s "It won't move. The lever is jammed."
     s "I can't stop it. I'm sorry."
-    $ loop_aware = True
+    $ p_aware_of_loop = True
     jump part_1
 
 label end_protagJam:
@@ -463,7 +469,7 @@ label end_protagJam:
     w "Then it's not my problem."
     s "You can't do this!"
     w "I already have."
-    $ loop_aware = True
+    $ p_aware_of_loop = True
     scene black with dissolve
 
     jump part_1
@@ -486,7 +492,7 @@ label end_wolfe:
     show wolfe
     w "..."
     w "No."
-    $ loop_aware = True
+    $ p_aware_of_loop = True
     
     jump start
 
