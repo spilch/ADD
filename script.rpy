@@ -82,6 +82,17 @@ $ bryanDumb = True
 $ wolfeDumb = True
 $ colliderJammed = False
 
+python:
+        mix_returning = False
+        mix_drinks_ordered = 0
+        mix_no_drink = 0
+        mix_at_bar = True
+        mix_first_visit = True
+        mix_knows_experiment = False
+        mix_knows_loop = False
+        mix_first_chat = True
+        mix_first_howismix = True
+
 scene bg apt with dissolve
 
 "June 7th, 2013 6:00 AM"
@@ -208,20 +219,19 @@ label mix_chat:
             m "Running that collider thingy? I hope it doesn't open a black hole or something. At least not before Terrence pays off his tab. That bastard owes me six hundred bucks."
             $ mix_experiment_talk = False
             $ mix_knows_experiment = True
-        "Not much. How are you?":
+            jump mix_chat
+        "'Not much. How are you?'":
             jump mix_howismix
-        "Actually, I have to go.":
+        "'Actually, I have to go.'":
             m "Alright then. See you next time."
             jump bar_menu
 
 label mix_howismix:
     if mix_first_howismix:
         m "Same shit, different day."
+        $ mix_first_howismix = False
     if mix_knows_loop:
         m "I think."
-    else:
-        m "What's up?"
-    $ mix_first_howismix = False
     menu:
         "Why do they call you Mix?" if not p_knows_mix:
             m "My birth name is Maxine, but I hate it."
