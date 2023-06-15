@@ -1,35 +1,68 @@
+##story changes##
+#061323 - Loop is open from start, p has amnesia?
+
 #to do:
 #Add all story branches then use conditionals to hide
-#set up characterKnows to replace characterDumb flag?
-#organize conversation flags by character
+# set up [character abreviation]_knows_[topic] flags, [char abr]_talk = [boolean] to show/hide convo options
+# organize conversation flags by character
+# 
 
-#230528:added bar with tardy flag
-    #Changed "tookWalk" flag to "tardy"
-    #Added colliderJammed flag and respective endings
-#230606: added mix convo tree with repeat tracking, which is brokensz
-#230608: started changing flags to snake case format and renaming flags/variables for readability including "aware" for info and "knows"
-    # mostly fixed mix's responses changing based on player choices (for drink ordering)
-
+# 230528:added bar with p_late_for_work flag
+    #Changed "tookWalk" flag to "p_late_for_work"
+    #Added collider_jammed flag and respective endings
+# 230606: added mix convo tree with repeat tracking, which is brokensz
+#  mostly fixed mix's responses changing based on player choices (for drink ordering)
+# 230614: deleted some (i hope) unnecessary junk, more snake case variable styling
+#  started organizing PC and NPC flags for convo options, knowledge and states based on planned topics
 
 init:
 
     python:
-        tardy = False 
-        #$ bryanKnows = False
-        #$ wolfeKnows = False
-        #$ sophiaKnows = False
-        bryanDumb = True
-        wolfeDumb = True
-        #$ wolfeKnows = False
-        #$ sophiaKnows = False
-        p_aware_of_loop = False
-        colliderJammed = False 
-        visited_bar = False
+
+        ## flags and variables to track states ##
+        p_looping = False # is the p stuck in the time loop yet
+        p_late_for_work = False 
+        p_showered = False
+        p_visited_bar = False
+        p_visited_lab = False
+
+        p_knows_looping = False
+        p_knows_mix = False
+        p_knows_drink = False
+        p_knows_sister = False
+        p_knows_bryan = False
+        p_knows_dog = False
+        p_knows_book = False
+        p_knows_wolfe = False
+        p_knows_sofia = False
+
+
+        collider_jammed = False 
+
+
         #mix_changedmind = False
-     
-        ## conversation tracking ##
-        # track which convo options will be shown: [character]_[topic]_talk = True/False #
-        # track who knows who for greetings: [character initial]_knows_[character name] #
+
+
+
+        # bryan #  
+        b_talk_greeting_1 = True
+        b_talk_greeting_2 = False # make 1st greeting unique, further greetings shorter
+        b_talk_experiment = True
+        b_talk_howareyou = True
+        b_talk_book = False # need to make book talk appear only if p_knows_book, but disappear after talk
+
+        b_knows_looping = False
+
+
+        # mix - reworking to match others #  
+        #m_talk_greeting_1 = True
+        #m_talk_greeting_2 = False # make 1st greeting unique, further greetings shorter
+        #m_talk_experiment = True
+        #m_talk_looping = False # should I use p_knows_looping and/or m_knows_looping to manage topic availability?
+        #m_talk_howareyou = True
+        #m_talk_sister = True
+ 
+ 
         mix_experiment_talk = True
         mix_timeloop_talk = False
         mix_returning = False
@@ -37,9 +70,7 @@ init:
         mix_no_drink = 0
         mix_at_bar = True
         mix_first_visit = True
-        p_knows_mix = False 
-        p_knows_drink = False
-
+        
     #characters
     define p = Character("You")
     define s = Character("Sophia",
@@ -63,25 +94,24 @@ label start:
 label part_1:
 
 
-if p_aware_of_loop:
+if p_knows_looping:
     scene black with dissolve
     "You feel a science-y explosion."
     #insert time rift animation
 
-$ saysFeels = False
-$ tardy = False
+$ p_late_for_work = False
 #$ bryanKnows = False
 #$ wolfeKnows = False
 #$ sophiaKnows = False
 $ bryanDumb = True
 $ wolfeDumb = True
-$ colliderJammed = False
+$ collider_jammed = False
 
 scene bg apt with dissolve
 
 "June 7th, 2013 6:00 AM"
 "The day of the experiment."
-if p_aware_of_loop:
+if p_knows_looping:
     "Again."
     "You are in a time loop."
 
@@ -89,12 +119,12 @@ menu:
 
     "Go back to bed":
         scene black with dissolve
-        $ p_aware_of_loop = True
+        $ p_knows_looping = True
         jump start
     "Go to the lab":
         jump lab
     "Go to the bar":      
-        $ tardy = True
+        $ p_late_for_work = True
         jump bar
    
     #Add "Go to the Bar"
@@ -105,12 +135,12 @@ menu:
 
     "Go back to bed":
         scene black with dissolve
-        $ p_aware_of_loop = True
+        $ p_knows_looping = True
         jump start
     "Go to the lab":
         jump lab
     "Go to the bar":      
-        $ tardy = True
+        $ p_late_for_work = True
         jump bar
 
 label bar:
@@ -131,7 +161,7 @@ label bar_menu:
         "Go home": 
             jump part_1
         "Sit around":  
-            $ p_aware_of_loop = True
+            $ p_knows_looping = True
             jump part_1
 
 
@@ -192,7 +222,7 @@ label mix_whatsnew:
     jump mix_convo
 label mix_convo:
     menu:
-        "'I'm stuck in a time loop.'" if p_aware_of_loop:
+        "'I'm stuck in a time loop.'" if p_knows_looping:
             $ mix_timeloop_talk = False 
             m "Huh."
             m "You got the Lotto numbers yet? Just kidding. If I came into money, my family would come begging before the check cleared."
@@ -233,21 +263,21 @@ label lab:
         "Talk to Sophia":
             jump sophia_greeting
         "Sit around.":
-            $ p_aware_of_loop = True
+            $ p_knows_looping = True
             jump part_1
 
 label wolfe_greeting:
     scene bg lab
     show wolfe at center with dissolve
 
-    if tardy:
+    if p_late_for_work:
         w "You're late. I hate that."
     w "We are on the brink of a discovery that will benefit humanity, the shareholders, and my bank account. Don't fuck it up."
    
     menu:
-        "'Too late. If we don't shut down the collider, it will create a time loop." if p_aware_of_loop:
+        "'Too late. If we don't shut down the collider, it will create a time loop." if p_knows_looping:
             $ wolfeDumb = False
-            $ colliderJammed = True
+            $ collider_jammed = True
             w "I've heard that joke before. It's still not funny."
             jump wolfe_insist     
         "'Of course.'":
@@ -266,7 +296,7 @@ label bryan_greeting:
     scene bg lab
     show bryan at center with dissolve
 
-    if tardy:
+    if p_late_for_work:
         b "You're finally here! I brought you coffee. It might be a little cold. "
     else:
          b "You're here! I brought you coffee, the usual."
@@ -274,12 +304,12 @@ label bryan_greeting:
     b "I heard your project is using the collider today. That's so cool. I've never even seen it up close."
 
     menu:
-        "'It is about to blow up and get me stuck in a time loop, so I'm kind of over it.'" if p_aware_of_loop:
+        "'It is about to blow up and get me stuck in a time loop, so I'm kind of over it.'" if p_knows_looping:
             $ bryanDumb = False
             b "Seriously?! I have to call my pet sitter."
             p "Why?"
             jump lab
-        "'Would you like to?'" if p_aware_of_loop:
+        "'Would you like to?'" if p_knows_looping:
             scene black with dissolve
             jump end_bryan
         "'Maybe I can give you a tour after the experiment.'":
@@ -334,7 +364,7 @@ label end_bryan:
     scene bg collider
     show bryan at center
     b "Here goes."
-    if colliderJammed:
+    if collider_jammed:
         jump end_bryanJam
 
     jump very_end
@@ -348,7 +378,7 @@ label end_bryanJam:
     b "No, I'm trying to move it. It won't budge. What's happening?"
     p "Fuck."
     # sfx rising hum 2
-    $ p_aware_of_loop = True
+    $ p_knows_looping = True
     scene black with dissolve
     jump part_1
 
@@ -356,12 +386,12 @@ label sophia_greeting:
     scene bg lab
     show sophia at center with dissolve
 
-    if tardy:
+    if p_late_for_work:
         s "You're late! Aren't you excited about the experiment today?"
     else:
         s "Good morning! Aren't you excited about the experiment today?"
     menu:
-        "'It causes a temporal rift and now I'm stuck in a time loop, so I guess you could say I have mixed feelings.'" if p_aware_of_loop:
+        "'It causes a temporal rift and now I'm stuck in a time loop, so I guess you could say I have mixed feelings.'" if p_knows_looping:
             s "If that's true, you'll have plenty of time to sort those feelings out."
             menu:
                 "I'd rather prevent the rift. Will you help me?":
@@ -389,13 +419,13 @@ label coinflip:
 menu:
     "'Heads. Thank you for your sacrifice.'":
         s "I do it for Science."
-        if colliderJammed:
+        if collider_jammed:
             jump end_sophiaJam
         else:
             jump end_sophiaDies
     "(LIE) 'Tails. I guess this is goodbye.'":
         s "I guess so. Before we do this, I- nevermind."
-        if colliderJammed:
+        if collider_jammed:
             jump end_protagJam
         else:
             jump end_protagDies
@@ -410,7 +440,7 @@ label end_sophiaDies:
     s "I'm ready."
     scene bg lab
     p "The blast doors are closed. Engage the manual shut-down. Goodbye, Sophia."
-    if colliderJammed:
+    if collider_jammed:
         jump end_sophiaJam
     scene bg collider
     show sophia
@@ -435,7 +465,7 @@ label end_sophiaJam:
     s "..."
     s "It won't move. The lever is jammed."
     s "I can't stop it. I'm sorry."
-    $ p_aware_of_loop = True
+    $ p_knows_looping = True
     jump part_1
 
 label end_protagJam:
@@ -469,7 +499,7 @@ label end_protagJam:
     w "Then it's not my problem."
     s "You can't do this!"
     w "I already have."
-    $ p_aware_of_loop = True
+    $ p_knows_looping = True
     scene black with dissolve
 
     jump part_1
@@ -492,7 +522,7 @@ label end_wolfe:
     show wolfe
     w "..."
     w "No."
-    $ p_aware_of_loop = True
+    $ p_knows_looping = True
     
     jump start
 
